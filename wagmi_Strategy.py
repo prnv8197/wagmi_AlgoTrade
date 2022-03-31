@@ -49,4 +49,4 @@ def MyStrategy1(crypto_asset = 'ETH-USD', p_interval = '15m', p_period = '1mo', 
         return 'Short'
         
     return 'None'
-print(MyStrategy1())
+#print(MyStrategy1())
