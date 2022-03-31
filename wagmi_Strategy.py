@@ -49,4 +49,6 @@ def MyStrategy1(crypto_asset = 'ETH-USD', p_interval = '15m', p_period = '1mo', 
         return 'Short'
         
     return 'Pass'
-#print(MyStrategy1())
+
+if __name__ == "__main__":
+    print(MyStrategy1())
