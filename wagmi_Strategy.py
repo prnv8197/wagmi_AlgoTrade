@@ -12,7 +12,7 @@ from datetime import datetime
 from getIndicators import *
 
 
-def MyStrategy1(crypto_asset, p_interval, p_period, s_interval, s_period):
+def MyStrategy1(crypto_asset = 'ETH-USD', p_interval = '5m', p_period = '1mo', s_interval = '1m', s_period = '1mo'):
    
     flag_long = False
     flag_short = False
@@ -46,4 +46,4 @@ def MyStrategy1(crypto_asset, p_interval, p_period, s_interval, s_period):
     return False
         
 
-# print(MyStrategy1('ETH-USD', '5m', '1mo', '1m', '1mo'))
+print(MyStrategy1())
