@@ -12,7 +12,7 @@ from datetime import datetime
 from getIndicators import *
 
 
-def MyStrategy1(crypto_asset = 'ETH-USD', p_interval = '5m', p_period = '1mo', s_interval = '1m', s_period = '1mo'):
+def MyStrategy1(crypto_asset = 'ETH-USD', p_interval = '15m', p_period = '1mo', s_interval = '5m', s_period = '1mo'):
    
     flag_long = False
     flag_short = False
@@ -31,7 +31,7 @@ def MyStrategy1(crypto_asset = 'ETH-USD', p_interval = '5m', p_period = '1mo', s
         rc_cross = price['UC'][-1] < price['Close'][-1]
         if(rc_cross and flag_s):
             flag_long = True
-        return flag_long
+        
         
     if(price['50SMA'][-1] < price['Lower Band'][-1] and price['signal_line'][-1] > macd_mean+1*macd_dev): 
         
@@ -41,9 +41,12 @@ def MyStrategy1(crypto_asset = 'ETH-USD', p_interval = '5m', p_period = '1mo', s
         rc_cross = price['LC'][-1] > price['Close'][-1]
         if(rc_cross and flag_s):
             flag_short = True
-        return flag_short
         
-    return False
         
-
+    if(flag_long):
+        return 'Long'
+    if(flag_short):
+        return 'Short'
+        
+    return 'None'
 print(MyStrategy1())
