@@ -48,5 +48,5 @@ def MyStrategy1(crypto_asset = 'ETH-USD', p_interval = '15m', p_period = '1mo', 
     if(flag_short):
         return 'Short'
         
-    return 'None'
+    return 'Pass'
 #print(MyStrategy1())
