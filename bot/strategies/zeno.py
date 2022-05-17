@@ -13,6 +13,8 @@ from freqtrade.strategy import (BooleanParameter, CategoricalParameter, DecimalP
 # Add your lib to import here
 import talib.abstract as ta
 import freqtrade.vendor.qtpylib.indicators as qtpylib
+from getIndicators import *
+from OLS import regression_channel
 
 
 # This class is a sample. Feel free to customize it.
@@ -42,14 +44,14 @@ class Zeno(IStrategy):
     # Minimal ROI designed for the strategy.
     # This attribute will be overridden if the config file contains "minimal_roi".
     minimal_roi = {
-        "60": 0.01,
-        "30": 0.02,
-        "0": 0.04
+        # "60": 0.01,
+        # "30": 0.02,
+        "0": 0.01
     }
 
     # Optimal stoploss designed for the strategy.
     # This attribute will be overridden if the config file contains "stoploss".
-    stoploss = -0.10
+    stoploss = -0.01
 
     # Trailing stoploss
     trailing_stop = False
@@ -58,7 +60,7 @@ class Zeno(IStrategy):
     # trailing_stop_positive_offset = 0.0  # Disabled / not configured
 
     # Optimal timeframe for the strategy.
-    timeframe = '5m'
+    timeframe = '1m'
 
     # Run "populate_indicators()" only for new candle.
     process_only_new_candles = False
@@ -75,7 +77,7 @@ class Zeno(IStrategy):
     exit_short_rsi = IntParameter(low=1, high=50, default=30, space='buy', optimize=True, load=True)
 
     # Number of candles the strategy requires before producing valid signals
-    startup_candle_count: int = 30
+    startup_candle_count: int = 24
 
     # Optional order type mapping.
     order_types = {
@@ -132,11 +134,49 @@ class Zeno(IStrategy):
         :return: a Dataframe with all mandatory indicators for the strategies
         """
 
+        # Bollinger Bands
+
+        # Implemented using qtpylib
+        # bollinger = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe), window=20, stds=2)
+        # dataframe['bb_lowerband'] = bollinger['lower']
+        # dataframe['bb_middleband'] = bollinger['mid']
+        # dataframe['bb_upperband'] = bollinger['upper']
+        # dataframe["bb_percent"] = (
+        #     (dataframe["close"] - dataframe["bb_lowerband"]) /
+        #     (dataframe["bb_upperband"] - dataframe["bb_lowerband"])
+        # )
+        # dataframe["bb_width"] = (
+        #     (dataframe["bb_upperband"] - dataframe["bb_lowerband"]) / dataframe["bb_middleband"]
+        # )
+
+        # Pranav's custom implementation
+        dataframe = getBollingerBands(dataframe)
+
+        # Bollinger Bands - Weighted (EMA based instead of SMA)
+        # weighted_bollinger = qtpylib.weighted_bollinger_bands(
+        #     qtpylib.typical_price(dataframe), window=20, stds=2
+        # )
+        # dataframe["wbb_upperband"] = weighted_bollinger["upper"]
+        # dataframe["wbb_lowerband"] = weighted_bollinger["lower"]
+        # dataframe["wbb_middleband"] = weighted_bollinger["mid"]
+        # dataframe["wbb_percent"] = (
+        #     (dataframe["close"] - dataframe["wbb_lowerband"]) /
+        #     (dataframe["wbb_upperband"] - dataframe["wbb_lowerband"])
+        # )
+        # dataframe["wbb_width"] = (
+        #     (dataframe["wbb_upperband"] - dataframe["wbb_lowerband"]) /
+        #     dataframe["wbb_middleband"]
+        # )
+        dataframe = getMACD(dataframe)
+        dataframe['50SMA'] = dataframe['close'].rolling(window = 50).mean()   
+        
+
+
         # Momentum Indicators
         # ------------------------------------
 
         # ADX
-        dataframe['adx'] = ta.ADX(dataframe)
+        # dataframe['adx'] = ta.ADX(dataframe)
 
         # # Plus Directional Indicator / Movement
         # dataframe['plus_dm'] = ta.PLUS_DM(dataframe)
@@ -175,7 +215,7 @@ class Zeno(IStrategy):
         # dataframe['cci'] = ta.CCI(dataframe)
 
         # RSI
-        dataframe['rsi'] = ta.RSI(dataframe)
+        # dataframe['rsi'] = ta.RSI(dataframe)
 
         # # Inverse Fisher transform on RSI: values [-1.0, 1.0] (https://goo.gl/2JGGoy)
         # rsi = 0.1 * (dataframe['rsi'] - 50)
@@ -190,9 +230,9 @@ class Zeno(IStrategy):
         # dataframe['slowk'] = stoch['slowk']
 
         # Stochastic Fast
-        stoch_fast = ta.STOCHF(dataframe)
-        dataframe['fastd'] = stoch_fast['fastd']
-        dataframe['fastk'] = stoch_fast['fastk']
+        # stoch_fast = ta.STOCHF(dataframe)
+        # dataframe['fastd'] = stoch_fast['fastd']
+        # dataframe['fastk'] = stoch_fast['fastk']
 
         # # Stochastic RSI
         # Please read https://github.com/freqtrade/freqtrade/issues/2961 before using this.
@@ -202,13 +242,13 @@ class Zeno(IStrategy):
         # dataframe['fastk_rsi'] = stoch_rsi['fastk']
 
         # MACD
-        macd = ta.MACD(dataframe)
-        dataframe['macd'] = macd['macd']
-        dataframe['macdsignal'] = macd['macdsignal']
-        dataframe['macdhist'] = macd['macdhist']
+        # macd = ta.MACD(dataframe)
+        # dataframe['macd'] = macd['macd']
+        # dataframe['macdsignal'] = macd['macdsignal']
+        # dataframe['macdhist'] = macd['macdhist']
 
         # MFI
-        dataframe['mfi'] = ta.MFI(dataframe)
+        # dataframe['mfi'] = ta.MFI(dataframe)
 
         # # ROC
         # dataframe['roc'] = ta.ROC(dataframe)
@@ -216,35 +256,7 @@ class Zeno(IStrategy):
         # Overlap Studies
         # ------------------------------------
 
-        # Bollinger Bands
-        bollinger = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe), window=20, stds=2)
-        dataframe['bb_lowerband'] = bollinger['lower']
-        dataframe['bb_middleband'] = bollinger['mid']
-        dataframe['bb_upperband'] = bollinger['upper']
-        dataframe["bb_percent"] = (
-            (dataframe["close"] - dataframe["bb_lowerband"]) /
-            (dataframe["bb_upperband"] - dataframe["bb_lowerband"])
-        )
-        dataframe["bb_width"] = (
-            (dataframe["bb_upperband"] - dataframe["bb_lowerband"]) / dataframe["bb_middleband"]
-        )
-
-        # Bollinger Bands - Weighted (EMA based instead of SMA)
-        # weighted_bollinger = qtpylib.weighted_bollinger_bands(
-        #     qtpylib.typical_price(dataframe), window=20, stds=2
-        # )
-        # dataframe["wbb_upperband"] = weighted_bollinger["upper"]
-        # dataframe["wbb_lowerband"] = weighted_bollinger["lower"]
-        # dataframe["wbb_middleband"] = weighted_bollinger["mid"]
-        # dataframe["wbb_percent"] = (
-        #     (dataframe["close"] - dataframe["wbb_lowerband"]) /
-        #     (dataframe["wbb_upperband"] - dataframe["wbb_lowerband"])
-        # )
-        # dataframe["wbb_width"] = (
-        #     (dataframe["wbb_upperband"] - dataframe["wbb_lowerband"]) /
-        #     dataframe["wbb_middleband"]
-        # )
-
+        
         # # EMA - Exponential Moving Average
         # dataframe['ema3'] = ta.EMA(dataframe, timeperiod=3)
         # dataframe['ema5'] = ta.EMA(dataframe, timeperiod=5)
@@ -262,17 +274,17 @@ class Zeno(IStrategy):
         # dataframe['sma100'] = ta.SMA(dataframe, timeperiod=100)
 
         # Parabolic SAR
-        dataframe['sar'] = ta.SAR(dataframe)
+        # dataframe['sar'] = ta.SAR(dataframe)
 
         # TEMA - Triple Exponential Moving Average
-        dataframe['tema'] = ta.TEMA(dataframe, timeperiod=9)
+        # dataframe['tema'] = ta.TEMA(dataframe, timeperiod=9)
 
         # Cycle Indicator
         # ------------------------------------
         # Hilbert Transform Indicator - SineWave
-        hilbert = ta.HT_SINE(dataframe)
-        dataframe['htsine'] = hilbert['sine']
-        dataframe['htleadsine'] = hilbert['leadsine']
+        # hilbert = ta.HT_SINE(dataframe)
+        # dataframe['htsine'] = hilbert['sine']
+        # dataframe['htleadsine'] = hilbert['leadsine']
 
         # Pattern Recognition - Bullish candlestick patterns
         # ------------------------------------
@@ -348,22 +360,40 @@ class Zeno(IStrategy):
         :param metadata: Additional information, like the currently traded pair
         :return: DataFrame with entry columns populated
         """
+        # Maybe we should include this in populate_indicators itself
+        macd_mean = dataframe['signal_line'].mean()
+        macd_dev = dataframe['signal_line'].std()
+        df_channel = regression_channel(dataframe)
+
         dataframe.loc[
             (
+                (dataframe['50SMA'] > dataframe['Upper Band']) &
+                (dataframe['signal_line'] < macd_mean-1*macd_dev) &
+                # WARNING: The following checks are supposed to run on 5m candle data in the original strategy
+                (dataframe['close'].rolling(window = 50).mean() < dataframe['close']) &
+                #RC Cross
+                # (df_channel['UC'][-1] < df_channel['Close'][-1]) &
                 # Signal: RSI crosses above 30
-                (qtpylib.crossed_above(dataframe['rsi'], self.buy_rsi.value)) &
-                (dataframe['tema'] <= dataframe['bb_middleband']) &  # Guard: tema below BB middle
-                (dataframe['tema'] > dataframe['tema'].shift(1)) &  # Guard: tema is raising
+                # (qtpylib.crossed_above(dataframe['rsi'], self.buy_rsi.value)) &
+                # (dataframe['tema'] <= dataframe['bb_middleband']) &  # Guard: tema below BB middle
+                # (dataframe['tema'] > dataframe['tema'].shift(1)) &  # Guard: tema is raising
                 (dataframe['volume'] > 0)  # Make sure Volume is not 0
             ),
             'enter_long'] = 1
 
         dataframe.loc[
             (
+
+                (dataframe['50SMA'] < dataframe['Lower Band']) &
+                (dataframe['signal_line'] > macd_mean + 1*macd_dev) &
+                # WARNING: The following checks are supposed to run on 5m candle data in the original strategy
+                (dataframe['close'].rolling(window = 50).mean() > dataframe['close']) &
+                #RC Cross
+                # (df_channel['LC'][-1] > df_channel['Close'][-1]) &
                 # Signal: RSI crosses above 70
-                (qtpylib.crossed_above(dataframe['rsi'], self.short_rsi.value)) &
-                (dataframe['tema'] > dataframe['bb_middleband']) &  # Guard: tema above BB middle
-                (dataframe['tema'] < dataframe['tema'].shift(1)) &  # Guard: tema is falling
+                # (qtpylib.crossed_above(dataframe['rsi'], self.short_rsi.value)) &
+                # (dataframe['tema'] > dataframe['bb_middleband']) &  # Guard: tema above BB middle
+                # (dataframe['tema'] < dataframe['tema'].shift(1)) &  # Guard: tema is falling
                 (dataframe['volume'] > 0)  # Make sure Volume is not 0
             ),
             'enter_short'] = 1
@@ -377,26 +407,30 @@ class Zeno(IStrategy):
         :param metadata: Additional information, like the currently traded pair
         :return: DataFrame with exit columns populated
         """
-        dataframe.loc[
-            (
-                # Signal: RSI crosses above 70
-                (qtpylib.crossed_above(dataframe['rsi'], self.sell_rsi.value)) &
-                (dataframe['tema'] > dataframe['bb_middleband']) &  # Guard: tema above BB middle
-                (dataframe['tema'] < dataframe['tema'].shift(1)) &  # Guard: tema is falling
-                (dataframe['volume'] > 0)  # Make sure Volume is not 0
-            ),
+        # dataframe.loc[
+        #     (
+        #         # Signal: RSI crosses above 70
+        #         (qtpylib.crossed_above(dataframe['rsi'], self.sell_rsi.value)) &
+        #         (dataframe['tema'] > dataframe['bb_middleband']) &  # Guard: tema above BB middle
+        #         (dataframe['tema'] < dataframe['tema'].shift(1)) &  # Guard: tema is falling
+        #         (dataframe['volume'] > 0)  # Make sure Volume is not 0
+        #     ),
 
-            'exit_long'] = 1
+        #     'exit_long'] = 1
 
-        dataframe.loc[
-            (
-                # Signal: RSI crosses above 30
-                (qtpylib.crossed_above(dataframe['rsi'], self.exit_short_rsi.value)) &
-                # Guard: tema below BB middle
-                (dataframe['tema'] <= dataframe['bb_middleband']) &
-                (dataframe['tema'] > dataframe['tema'].shift(1)) &  # Guard: tema is raising
-                (dataframe['volume'] > 0)  # Make sure Volume is not 0
-            ),
-            'exit_short'] = 1
+        # No exit signals yet. We just work off minimal ROI and stoploss
+        dataframe['exit_long'] = 0
+        dataframe['exit_short'] = 0
+
+        # dataframe.loc[
+        #     (
+        #         # Signal: RSI crosses above 30
+        #         (qtpylib.crossed_above(dataframe['rsi'], self.exit_short_rsi.value)) &
+        #         # Guard: tema below BB middle
+        #         (dataframe['tema'] <= dataframe['bb_middleband']) &
+        #         (dataframe['tema'] > dataframe['tema'].shift(1)) &  # Guard: tema is raising
+        #         (dataframe['volume'] > 0)  # Make sure Volume is not 0
+        #     ),
+        #     'exit_short'] = 1
 
         return dataframe
