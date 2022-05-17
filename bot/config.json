@@ -1,4 +1,3 @@
-
 {
     "max_open_trades": -1,
     "stake_currency": "USDT",
@@ -25,7 +24,7 @@
             "bids_to_ask_delta": 1
         }
     },
-    "exit_pricing":{
+    "exit_pricing": {
         "price_side": "same",
         "use_order_book": true,
         "order_book_top": 1
@@ -37,6 +36,23 @@
         "ccxt_config": {},
         "ccxt_async_config": {},
         "pair_whitelist": [
+            "BTC/USDT",
+            "ETH/USDT",
+            "SOL/USDT",
+            "APE/USDT",
+            "GMT/USDT",
+            "JASMY/USDT",
+            "XRP/USDT",
+            "AVAX/USDT",
+            "ADA/USDT",
+            "SHIB/USDT",
+            "DOT/USDT",
+            "FTM/USDT",
+            "GAL/USDT",
+            "TRX/USDT",
+            "NEAR/USDT",
+            "MATIC/USDT",
+            "ATOM/USDT"
         ],
         "pair_blacklist": [
             "BNB/.*"
@@ -44,7 +60,7 @@
     },
     "pairlists": [
         {
-            "method": "VolumePairList",
+            "method": "StaticPairList",
             "number_assets": 20,
             "sort_key": "quoteVolume",
             "min_value": 0,

@@ -1,2 +1,4 @@
 __pycache__/
 bot/logs/
+bot/backtest_results/
+bot/data/
