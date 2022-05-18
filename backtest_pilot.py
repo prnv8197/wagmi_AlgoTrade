@@ -22,8 +22,11 @@ price_primary = price_primary.drop(columns = ['High', 'Low', 'Volume'], axis = 1
 
 price_primary = getBollingerBands(price_primary)
 price_primary = getMACD(price_primary)
-price_primary = getSMA(price_primary)
-price_primary = regression_channel(price_primary)
+price_primary['SMA50'] = price_primary['Close'].rolling(window = 50).mean()
+
+# Don't use price_primary here, create a new dataframe for regression
+price_predict = regression_channel(price_primary)
+
 price_primary['MACD_mean'] = price_primary['signal_line'].mean()
 price_primary['MACD_dev'] = price_primary['signal_line'].std()
 ########################################################################################################################
