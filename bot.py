@@ -38,7 +38,7 @@ def setup_dydx():
     return client
 
 
-def go_long(dydx_client, amount, stop_loss):
+def go_long(dydx_client, amount, stop_loss, roi):
     # Get our position ID.
     account_response = dydx_client.private.get_account()
     position_id = account_response.data['account']['positionId']
@@ -64,9 +64,7 @@ def go_long(dydx_client, amount, stop_loss):
     print(order_response.data)
 
     buy_price = order_response.data['order']['price']
-    stop_trigger_price = '%.1f' % (float(buy_price) * (1-stop_loss))
-    stop_limit_price = '%.1f' % (float(buy_price) * (1-stop_loss*5))
-
+   
     # Also make a stop loss order
     stoploss_order = client.private.create_order(
         position_id=position_id,
@@ -76,22 +74,35 @@ def go_long(dydx_client, amount, stop_loss):
         post_only=False,
         size=str(amount),
         price="1", # Dunno what to do here
-        trailing_percent='-%f' % stop_loss,
+        trailing_percent='-%f' % stop_loss, #NEed to switch back to triggerPrice
         limit_fee='0.015',
         expiration_epoch_seconds=time.time() + 15000,
     )
     print(stoploss_order.data)
 
+    take_profit_price = '%.1f' % (float(buy_price) * (1 + (roi/100)))
+    trigger_profit_price = '%.1f' % (float(buy_price) * (1 + (roi/200)))
     # Also make a take-profit order
-
-    return order_response
-
-
-def check_open_orders(dydx_client):
-    # Count open orders (there should be exactly one).
-    orders_response = dydx_client.private.get_orders(
+    take_profit_order = client.private.create_order(
+        position_id=position_id,
         market=consts.MARKET_ETH_USD,
-        status=consts.ORDER_STATUS_OPEN,
+        side=consts.ORDER_SIDE_SELL,
+        order_type=consts.ORDER_TYPE_TAKE_PROFIT,
+        post_only=False,
+        size=str(amount),
+        price=take_profit_price,
+        trigger_price=trigger_profit_price,
+        limit_fee='0.015',
+        expiration_epoch_seconds=time.time() + 15000,
+    )
+    print(take_profit_order.data)
+
+
+def check_active_orders(dydx_client):
+    # Count open orders (there should be exactly one).
+    orders_response = dydx_client.private.get_active_orders(
+        market=consts.MARKET_ETH_USD,
+        # status=consts.ORDER_STATUS_OPEN,
     )
     print(orders_response.data)
     return len(orders_response.data['orders']) > 0
@@ -121,11 +132,12 @@ def start_bot(dydx_client):
         time.sleep(process_throttle_secs)
 
         # Check for open orders and skip this loop if there is one
-        if check_open_orders(dydx_client):
+        if check_active_orders(dydx_client):
+            print("You have active orders!")
             continue
         if (MyStrategy1() == "Long"):
-            print("Go long")
-            print(go_long(dydx_client, 0.0001, 0.01))
+            print("Going long")
+            go_long(dydx_client, amount=0.01, stop_loss=1, roi=1)
         elif(MyStrategy1() == "Short"):
             print("short!")
         else:
@@ -134,5 +146,4 @@ def start_bot(dydx_client):
 
 if __name__ == "__main__":
     client = setup_dydx()
-    # start_bot(client)
-    go_long(client, 0.01, 1)
+    start_bot(client) 
