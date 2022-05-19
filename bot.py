@@ -38,22 +38,52 @@ def setup_dydx():
     return client
 
 
-def go_long(dydx_client):
+def go_long(dydx_client, amount, stop_loss):
     # Get our position ID.
     account_response = dydx_client.private.get_account()
-    position_id = account_response['data']['account']['positionId']
+    position_id = account_response.data['account']['positionId']
+
+    eth_market = client.public.get_markets(market=consts.MARKET_ETH_USD)
+    buy_price = eth_market.data['markets']['ETH-USD']['oraclePrice']
+
+    # Make a market buy order
     order_params = {
         'position_id': position_id,
         'market': consts.MARKET_ETH_USD,
         'side': consts.ORDER_SIDE_BUY,
         'order_type': consts.ORDER_TYPE_MARKET,
         'post_only': False,
-        'size': '0.0001',
-                # 'price': '20',
-                'limit_fee': '0.0015',
-                'expiration_epoch_seconds': time.time() + 15000,
+        'size': str(amount),
+        'price': '%.1f' % float(buy_price),  # Set prceision to tick_size 0.1
+        'limit_fee': '0.0015',
+        'expiration_epoch_seconds': time.time() + 15000,
+        'time_in_force': consts.TIME_IN_FORCE_IOC
     }
     order_response = dydx_client.private.create_order(**order_params)
+    # TODO: Might need to check here if order filled or not!
+    print(order_response.data)
+
+    buy_price = order_response.data['order']['price']
+    stop_trigger_price = '%.1f' % (float(buy_price) * (1-stop_loss))
+    stop_limit_price = '%.1f' % (float(buy_price) * (1-stop_loss*5))
+
+    # Also make a stop loss order
+    stoploss_order = client.private.create_order(
+        position_id=position_id,
+        market=consts.MARKET_ETH_USD,
+        side=consts.ORDER_SIDE_SELL,
+        order_type=consts.ORDER_TYPE_TRAILING_STOP,
+        post_only=False,
+        size=str(amount),
+        price="1", # Dunno what to do here
+        trailing_percent='-%f' % stop_loss,
+        limit_fee='0.015',
+        expiration_epoch_seconds=time.time() + 15000,
+    )
+    print(stoploss_order.data)
+
+    # Also make a take-profit order
+
     return order_response
 
 
@@ -95,12 +125,14 @@ def start_bot(dydx_client):
             continue
         if (MyStrategy1() == "Long"):
             print("Go long")
-            print(go_long(dydx_client))
+            print(go_long(dydx_client, 0.0001, 0.01))
         elif(MyStrategy1() == "Short"):
             print("short!")
         else:
             print("Pass")
 
+
 if __name__ == "__main__":
     client = setup_dydx()
-    start_bot(client)
+    # start_bot(client)
+    go_long(client, 0.01, 1)
