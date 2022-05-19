@@ -35,21 +35,72 @@ def setup_dydx():
     stark_private_key = client.onboarding.derive_stark_key()
     client.stark_private_key = stark_private_key
 
-    # Get dYdX account balances
-    my_balances = client.private.get_account()
-    print(my_balances.__dict__)
+    return client
 
 
-def start_bot():
+def go_long(dydx_client):
+    # Get our position ID.
+    account_response = dydx_client.private.get_account()
+    position_id = account_response['data']['account']['positionId']
+    order_params = {
+        'position_id': position_id,
+        'market': consts.MARKET_ETH_USD,
+        'side': consts.ORDER_SIDE_BUY,
+        'order_type': consts.ORDER_TYPE_MARKET,
+        'post_only': False,
+        'size': '0.0001',
+                # 'price': '20',
+                'limit_fee': '0.0015',
+                'expiration_epoch_seconds': time.time() + 15000,
+    }
+    order_response = dydx_client.private.create_order(**order_params)
+    return order_response
+
+
+def check_open_orders(dydx_client):
+    # Count open orders (there should be exactly one).
+    orders_response = dydx_client.private.get_orders(
+        market=consts.MARKET_ETH_USD,
+        status=consts.ORDER_STATUS_OPEN,
+    )
+    print(orders_response.data)
+    return len(orders_response.data['orders']) > 0
+
+# def go_short(dydx_client):
+#     # Get our position ID.
+#     account_response = dydx_client.private.get_account()
+#     position_id = account_response['data']['account']['positionId']
+#     order_params = {
+#                 'position_id': position_id,
+#                 'market': consts.MARKET_ETH_USD,
+#                 'side': consts.ORDER_SIDE_BUY,
+#                 'order_type': consts.ORDER_TYPE_MARKET,
+#                 'post_only': False,
+#                 'size': '0.0001',
+#                 # 'price': '20',
+#                 'limit_fee': '0.0015',
+#                 'expiration_epoch_seconds': time.time() + 15000,
+#                 }
+#     order_response = dydx_client.private.create_order(**order_params)
+#     return order_response
+
+
+def start_bot(dydx_client):
     while(True):
+        # Run the strat every x seconds
+        time.sleep(process_throttle_secs)
+
+        # Check for open orders and skip this loop if there is one
+        if check_open_orders(dydx_client):
+            continue
         if (MyStrategy1() == "Long"):
             print("Go long")
+            print(go_long(dydx_client))
         elif(MyStrategy1() == "Short"):
             print("short!")
         else:
-            print("PAss")
-        time.sleep(process_throttle_secs)
-
+            print("Pass")
 
 if __name__ == "__main__":
-    setup_dydx()
+    client = setup_dydx()
+    start_bot(client)
