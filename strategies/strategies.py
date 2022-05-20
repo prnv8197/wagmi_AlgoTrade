@@ -9,7 +9,7 @@ import pandas as pd
 from utils.getData import getOHLC
 from OLS import OLS_max, regression_channel
 from datetime import datetime
-from getIndicators import *
+from utils.getIndicators import *
 
 
 def MyStrategy1(crypto_asset = 'ETH-USD', p_interval = '15m', p_period = '1mo', s_interval = '5m', s_period = '1mo'):

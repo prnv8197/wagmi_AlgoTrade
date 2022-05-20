@@ -5,7 +5,7 @@ import time
 import dydx3.constants as consts
 from sympy import false, true
 
-from strategies.strategies import MyStrategy1
+from strategies.zeno import ZenoStrategy
 from utils.dydx import setup_dydx
 
 
@@ -169,7 +169,7 @@ def check_if_pending(orders, dydx_client):
 #     return order_response
 
 
-def start_bot(dydx_client):
+def start_bot(dydx_client, strategy):
     current_orders = {}
     while(True):
         # Run the strat every x seconds
@@ -180,13 +180,11 @@ def start_bot(dydx_client):
             continue
 
         # Run our strategy
-        if (MyStrategy1() == "Long"):
+        if (strategy.should_long()):
             current_orders = go_long(
                 dydx_client, amount=0.01, stop_loss=1, roi=1)
-        elif(MyStrategy1() == "Short"):
-            print("short!")
-
 
 if __name__ == "__main__":
     client = setup_dydx()
-    start_bot(client)
+    strat = ZenoStrategy(client, consts.MARKET_ETH_USD)
+    start_bot(client, strat)
