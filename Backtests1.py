@@ -8,7 +8,7 @@ Created on Wed Mar 30 19:17:17 2022
 
 import pandas as pd
 from getIndicators import *
-from getData import getOHLC
+from utils.getData import getOHLC
 import statistics
 from OLS import OLS_max, regression_channel
 

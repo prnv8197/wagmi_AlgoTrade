@@ -2,41 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import time
-from dydx3 import Client
 import dydx3.constants as consts
-from dydx3 import private_key_to_public_key_pair_hex
 from sympy import false, true
-from web3 import Web3
-import os
-from dotenv import load_dotenv
 
-from strategies import MyStrategy1
+from strategies.strategies import MyStrategy1
+from utils.dydx import setup_dydx
 
-
-load_dotenv()
 
 process_throttle_secs = 5
-
-
-def setup_dydx():
-    # My Account 2 metamask address
-    ETHEREUM_ADDRESS = '0x17C562B0E8Fa75354C1b45F4f5dD8a2b6f38d663'
-    # Using Etthereum node hosted on ChainStack.
-    WEB_PROVIDER_URL = os.getenv('WEB_PROVIDER_URL')
-
-    client = Client(
-        network_id=consts.NETWORK_ID_ROPSTEN,
-        host=consts.API_HOST_ROPSTEN,
-        default_ethereum_address=ETHEREUM_ADDRESS,
-        web3=Web3(Web3.HTTPProvider(WEB_PROVIDER_URL)),
-        eth_private_key=os.getenv('ETH_PRIVATE_KEY')
-    )
-
-    # Set STARK key.
-    stark_private_key = client.onboarding.derive_stark_key()
-    client.stark_private_key = stark_private_key
-
-    return client
 
 
 def go_long(dydx_client, amount, stop_loss, roi):
@@ -205,7 +178,7 @@ def start_bot(dydx_client):
         # If there pending open orders, no trades will be placed
         if check_if_pending(current_orders, dydx_client):
             continue
-        
+
         # Run our strategy
         if (MyStrategy1() == "Long"):
             current_orders = go_long(

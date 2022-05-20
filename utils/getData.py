@@ -7,6 +7,10 @@ Created on Mon Dec 27 13:14:11 2021
 """
 
 import yfinance as yf
+import pandas as pd
+
+from dydx import setup_dydx
+
 
 def getOHLC(stock, period, interval, suffix = ""):
     stock = stock+suffix
@@ -14,6 +18,20 @@ def getOHLC(stock, period, interval, suffix = ""):
     hist = tickr.history(period, interval)
     hist=hist.drop(['Dividends', 'Stock Splits'], axis=1)
     return hist
+
+def getFromDydx(client, market):
+    candles = client.public.get_candles(
+    market=market,
+    resolution='1MIN',
+    )
+    print(candles.data)
+    print(len(candles.data['candles']))
+
+if __name__ == "__main__":
+    client = setup_dydx()
+    from dydx3.constants import MARKET_BTC_USD
+    getFromDydx(client, MARKET_BTC_USD)
+
 
 
 

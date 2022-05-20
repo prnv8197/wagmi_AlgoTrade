@@ -6,11 +6,11 @@ Created on Fri May 13 18:16:34 2022
 @author: pranav.atulya
 """
 
-from getData import getOHLC
+from utils.getData import getOHLC
 from getIndicators import *
 from OLS import OLS_max, regression_channel
 import statistics
-from strat1 import strat1
+from strategies.strat1 import strat1
 
 stock = 'AAPL'
 interval_primary = '15m'
