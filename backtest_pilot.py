@@ -7,7 +7,7 @@ Created on Fri May 13 18:16:34 2022
 """
 
 from utils.getData import getOHLC
-from getIndicators import *
+from utils.getIndicators import *
 from OLS import OLS_max, regression_channel
 import statistics
 from strategies.strat1 import strat1

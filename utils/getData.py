@@ -9,7 +9,7 @@ Created on Mon Dec 27 13:14:11 2021
 import yfinance as yf
 import pandas as pd
 
-from dydx import setup_dydx
+from utils.dydx import setup_dydx
 
 
 def getOHLC(stock, period, interval, suffix = ""):
@@ -19,18 +19,19 @@ def getOHLC(stock, period, interval, suffix = ""):
     hist=hist.drop(['Dividends', 'Stock Splits'], axis=1)
     return hist
 
-def getFromDydx(client, market):
+def getFromDydx(client, market, interval):
     candles = client.public.get_candles(
     market=market,
-    resolution='1MIN',
+    resolution=interval,
     )
-    print(candles.data)
-    print(len(candles.data['candles']))
+    df = pd.DataFrame(candles.data['candles'])
+    # Return the reverse (latest time at the bottom)
+    return df[::-1]
 
 if __name__ == "__main__":
     client = setup_dydx()
     from dydx3.constants import MARKET_BTC_USD
-    getFromDydx(client, MARKET_BTC_USD)
+    getFromDydx(client, MARKET_BTC_USD, '1MIN')
 
 
 

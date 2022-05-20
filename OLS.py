@@ -9,7 +9,7 @@ Created on Tue Feb 15 12:28:45 2022
 import pandas as pd
 import statsmodels.formula.api as sm
 import yfinance as yf
-from getIndicators import *
+from utils.getIndicators import *
 from utils.getData import *
 
 
