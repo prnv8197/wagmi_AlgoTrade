@@ -6,7 +6,7 @@ Created on Wed Mar 30 18:27:49 2022
 @author: pranav.atulya
 """
 import pandas as pd
-from getData import getOHLC
+from utils.getData import getOHLC
 from OLS import OLS_max, regression_channel
 from datetime import datetime
 from getIndicators import *

@@ -10,7 +10,7 @@ Created on Thu Jan  6 20:35:06 2022
 import pandas as pd
 from getIndicators import *
 
-from getData import getOHLC
+from utils.getData import getOHLC
 import statistics
 
 
