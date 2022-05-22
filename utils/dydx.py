@@ -12,7 +12,8 @@ def setup_dydx():
     # My Account 2 metamask address
     ETHEREUM_ADDRESS = '0x17C562B0E8Fa75354C1b45F4f5dD8a2b6f38d663'
     # Using Etthereum node hosted on ChainStack.
-    WEB_PROVIDER_URL = os.getenv('WEB_PROVIDER_URL')
+    # Exposing this key only for Sponsor verification purposes
+    WEB_PROVIDER_URL = "https://nd-574-439-281.p2pify.com/80e424588b078029ae1526522a01f527"
 
     client = Client(
         network_id=consts.NETWORK_ID_ROPSTEN,
